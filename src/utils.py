@@ -2,9 +2,10 @@ import os
 import sys
 import dill
 
-from src.exception import CustomException
-
 from sklearn.metrics import r2_score
+from sklearn.model_selection import GridSearchCV
+
+from src.exception import CustomException
 
 def save_object(file_path, obj):
     """
@@ -31,9 +32,13 @@ def save_object(file_path, obj):
     except Exception as e:
         raise CustomException(e, sys)
     
-def evaluate_models(X_train, y_train, X_test, y_test, models):
+def evaluate_models(X_train, y_train, X_test, y_test, models, parameters):
     """
-    Evaluate multiple regression models based on R² score
+    Evaluate multiple regression models based on R² score, with hyperparameter tuning.
+    
+    This function evaluates each model provided in the `models` dictionary using cross-validation 
+    for hyperparameter tuning via `GridSearchCV`, then trains the model using the best hyperparameters 
+    and evaluates the model on the test set.
 
     Args:
         X_train (np.array): Training feature data
@@ -41,6 +46,8 @@ def evaluate_models(X_train, y_train, X_test, y_test, models):
         X_test (np.array): Testing feature data
         y_test (np.array): Testing target data
         models (dict): A dictionary where keys are model names and values are model instances
+        parameters (dict): A dictionary where keys are model names and values are dictionaries of hyperparameters 
+                           to tune for each model
 
     Returns:
         dict: A dictionary with model names as keys and their corresponding R² scores on the test data
@@ -50,7 +57,17 @@ def evaluate_models(X_train, y_train, X_test, y_test, models):
         
         for i in range(len(list(models))):
             model = list(models.values())[i]
-            model.fit(X_train, y_train)  # Training the model
+            parameter = parameters[list(models.keys())[i]]
+            
+            # Hyperparameter Tuning with GridSearchCV
+            gs = GridSearchCV(model, parameter, cv=3)
+            gs.fit(X_train, y_train)
+            
+            # Set the model to the best hyperparameters found
+            model.set_params(**gs.best_params_)
+            model.fit(X_train, y_train)
+            
+            # model.fit(X_train, y_train)  # Training the model 
             
             # y_train_pred = model.predict(X_train)
             y_test_pred = model.predict(X_test)
