@@ -81,3 +81,25 @@ def evaluate_models(X_train, y_train, X_test, y_test, models, parameters):
             
     except Exception as e:
         raise CustomException(e,sys)
+    
+def load_object(file_path):
+    """
+    Loads a serialized object from a file using dill.
+
+    This function attempts to load an object from a file at the specified path. 
+    It uses the `dill` library to deserialize the object and return it.
+
+    Args:
+        file_path (str): The path to the file containing the serialized object.
+
+    Returns:
+        object: The deserialized object loaded from the file.
+
+    Raises:
+        CustomException: If an error occurs during loading the object (e.g., file not found, invalid format, etc.).
+    """
+    try:
+        with open(file_path, "rb") as file_obj:
+            return dill.load(file_obj)
+    except Exception as e:
+        raise CustomException(e, sys)
